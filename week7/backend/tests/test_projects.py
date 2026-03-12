@@ -111,3 +111,36 @@ def test_project_validation_and_relationship_errors(client):
     r = client.post("/action-items/", json={"description": "Missing project", "project_id": 999})
     assert r.status_code == 404
     assert r.json() == {"detail": "Project not found"}
+
+
+def test_projects_sorting_and_pagination(client):
+    for name in ["Gamma", "Alpha", "Beta"]:
+        r = client.post("/projects/", json={"name": name})
+        assert r.status_code == 201, r.text
+
+    r = client.get("/projects/", params={"sort": "name", "limit": 3})
+    assert r.status_code == 200
+    items = r.json()
+    assert [item["name"] for item in items] == ["Alpha", "Beta", "Gamma"]
+
+    r = client.get("/projects/", params={"sort": "-name", "limit": 3})
+    assert r.status_code == 200
+    items = r.json()
+    assert [item["name"] for item in items] == ["Gamma", "Beta", "Alpha"]
+
+    r = client.get("/projects/", params={"sort": "id", "skip": 1, "limit": 1})
+    assert r.status_code == 200
+    items = r.json()
+    assert len(items) == 1
+    assert items[0]["name"] == "Alpha"
+
+
+def test_projects_pagination_validation_errors(client):
+    r = client.get("/projects/", params={"skip": -1})
+    assert r.status_code == 422
+
+    r = client.get("/projects/", params={"limit": 0})
+    assert r.status_code == 422
+
+    r = client.get("/projects/", params={"limit": 201})
+    assert r.status_code == 422

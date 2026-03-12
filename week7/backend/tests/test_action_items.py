@@ -53,3 +53,45 @@ def test_action_item_validation_and_query_errors(client):
     assert "Invalid sort field 'unknown'" in r.json()["detail"]
 
 
+def test_action_items_sorting_and_pagination_with_filter(client):
+    descriptions = ["Task C", "Task A", "Task B"]
+    created = []
+    for description in descriptions:
+        r = client.post("/action-items/", json={"description": description})
+        assert r.status_code == 201, r.text
+        created.append(r.json())
+
+    r = client.put(f"/action-items/{created[1]['id']}/complete")
+    assert r.status_code == 200
+
+    r = client.get("/action-items/", params={"sort": "description", "limit": 3})
+    assert r.status_code == 200
+    items = r.json()
+    assert [item["description"] for item in items] == ["Task A", "Task B", "Task C"]
+
+    r = client.get("/action-items/", params={"sort": "-description", "limit": 3})
+    assert r.status_code == 200
+    items = r.json()
+    assert [item["description"] for item in items] == ["Task C", "Task B", "Task A"]
+
+    r = client.get(
+        "/action-items/",
+        params={"completed": False, "sort": "id", "skip": 1, "limit": 1},
+    )
+    assert r.status_code == 200
+    items = r.json()
+    assert len(items) == 1
+    assert items[0]["description"] == "Task B"
+
+
+def test_action_items_pagination_validation_errors(client):
+    r = client.get("/action-items/", params={"skip": -1})
+    assert r.status_code == 422
+
+    r = client.get("/action-items/", params={"limit": 0})
+    assert r.status_code == 422
+
+    r = client.get("/action-items/", params={"limit": 201})
+    assert r.status_code == 422
+
+
