@@ -15,7 +15,7 @@ Keep the implementation minimal.
 """
 
 # TODO: Fill this in!
-YOUR_REFLEXION_PROMPT = ""
+YOUR_REFLEXION_PROMPT = "Add a code to check the case, the missing digits and the missing specials in the password. Use the test case password to check **DO NOT** change the function name. It MUST remain `def is_valid_password(password: str) -> bool:`."
 
 
 # Ground-truth test suite used to evaluate generated code

@@ -9,7 +9,11 @@ load_dotenv()
 NUM_RUNS_TIMES = 5
 
 # TODO: Fill this in! Try to get as close to 100% correctness across all runs as possible.
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = """
+Randy is running a 50 mile marathon. He first stopped after 30 miles. His second stop was 5 miles before the finish line. How many miles di he run between his first and second stops
+A: First, we need to know the distance of the track by subtracting 50 mile (the total distance) and 5 mile (distance between finish line and second stop).
+The result is 55 mile. Next, we need to subtract the second stops and the first stop which is 55 minus 30. The result is 25 miles 
+"""
 
 USER_PROMPT = """
 Solve this problem, then give the final answer on the last line as "Answer: <number>".

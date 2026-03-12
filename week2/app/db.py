@@ -104,7 +104,11 @@ def list_action_items(note_id: Optional[int] = None) -> list[sqlite3.Row]:
         return list(cursor.fetchall())
 
 
-def mark_action_item_done(action_item_id: int, done: bool) -> None:
+def mark_action_item_done(action_item_id: int, done: bool) -> int:
+    """Update the done flag for an action item.
+
+    Returns the number of rows updated (0 means the id did not exist).
+    """
     with get_connection() as connection:
         cursor = connection.cursor()
         cursor.execute(
@@ -112,5 +116,7 @@ def mark_action_item_done(action_item_id: int, done: bool) -> None:
             (1 if done else 0, action_item_id),
         )
         connection.commit()
+        # cursor.rowcount tells us how many rows the UPDATE touched.
+        return cursor.rowcount
 
 

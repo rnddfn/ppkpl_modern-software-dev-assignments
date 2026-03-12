@@ -8,7 +8,13 @@ load_dotenv()
 NUM_RUNS_TIMES = 5
 
 # TODO: Fill this in!
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = """
+Solve this problem, then give the final answer on the last line as "Answer: <number>".
+what is 4^{12345} (mod 100)?
+A: First, we have to calculate dome of the exponent and look for the remainder if its divided by 100
+Next, look for the pattern, its 2 numbers in the back of the exponent and there is a cycle in the 10 numbers
+Next, Apply for the problem and then give the final answer in the last line as "Answer: <number>"
+"""
 
 
 USER_PROMPT = """

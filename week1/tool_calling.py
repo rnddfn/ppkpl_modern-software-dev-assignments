@@ -70,7 +70,20 @@ TOOL_REGISTRY: Dict[str, Callable[..., str]] = {
 # ==========================
 
 # TODO: Fill this in!
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = """You are a specialized tool-calling AI agent. Your ONLY job is to output valid JSON to execute a specific tool.
+
+You have access to the following tool:
+- Name: "output_every_func_return_type"
+- Description: Returns a list of function return types for a given Python file.
+- Arguments: {"file_path": "string (optional)"}
+
+When the user says "Call the tool now.", you must output ONLY a JSON object in the exact format below. Do not add any conversational text, greetings, or explanations. 
+
+REQUIRED JSON FORMAT:
+{
+    "tool": "output_every_func_return_type",
+    "args": {}
+}"""
 
 
 def resolve_path(p: str) -> str:

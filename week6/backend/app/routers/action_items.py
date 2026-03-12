@@ -10,6 +10,14 @@ from ..schemas import ActionItemCreate, ActionItemPatch, ActionItemRead
 
 router = APIRouter(prefix="/action-items", tags=["action_items"])
 
+ALLOWED_SORT_FIELDS = {
+    "id": ActionItem.id,
+    "description": ActionItem.description,
+    "completed": ActionItem.completed,
+    "created_at": ActionItem.created_at,
+    "updated_at": ActionItem.updated_at,
+}
+
 
 @router.get("/", response_model=list[ActionItemRead])
 def list_items(
@@ -25,10 +33,8 @@ def list_items(
 
     sort_field = sort.lstrip("-")
     order_fn = desc if sort.startswith("-") else asc
-    if hasattr(ActionItem, sort_field):
-        stmt = stmt.order_by(order_fn(getattr(ActionItem, sort_field)))
-    else:
-        stmt = stmt.order_by(desc(ActionItem.created_at))
+    sort_column = ALLOWED_SORT_FIELDS.get(sort_field, ActionItem.created_at)
+    stmt = stmt.order_by(order_fn(sort_column))
 
     rows = db.execute(stmt.offset(skip).limit(limit)).scalars().all()
     return [ActionItemRead.model_validate(row) for row in rows]

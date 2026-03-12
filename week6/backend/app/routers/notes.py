@@ -10,6 +10,14 @@ from ..schemas import NoteCreate, NotePatch, NoteRead
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
+ALLOWED_SORT_FIELDS = {
+    "id": Note.id,
+    "title": Note.title,
+    "content": Note.content,
+    "created_at": Note.created_at,
+    "updated_at": Note.updated_at,
+}
+
 
 @router.get("/", response_model=list[NoteRead])
 def list_notes(
@@ -25,10 +33,8 @@ def list_notes(
 
     sort_field = sort.lstrip("-")
     order_fn = desc if sort.startswith("-") else asc
-    if hasattr(Note, sort_field):
-        stmt = stmt.order_by(order_fn(getattr(Note, sort_field)))
-    else:
-        stmt = stmt.order_by(desc(Note.created_at))
+    sort_column = ALLOWED_SORT_FIELDS.get(sort_field, Note.created_at)
+    stmt = stmt.order_by(order_fn(sort_column))
 
     rows = db.execute(stmt.offset(skip).limit(limit)).scalars().all()
     return [NoteRead.model_validate(row) for row in rows]
@@ -69,15 +75,15 @@ def get_note(note_id: int, db: Session = Depends(get_db)) -> NoteRead:
 @router.get("/unsafe-search", response_model=list[NoteRead])
 def unsafe_search(q: str, db: Session = Depends(get_db)) -> list[NoteRead]:
     sql = text(
-        f"""
+        """
         SELECT id, title, content, created_at, updated_at
         FROM notes
-        WHERE title LIKE '%{q}%' OR content LIKE '%{q}%'
+        WHERE title LIKE :pattern OR content LIKE :pattern
         ORDER BY created_at DESC
         LIMIT 50
         """
     )
-    rows = db.execute(sql).all()
+    rows = db.execute(sql, {"pattern": f"%{q}%"}).all()
     results: list[NoteRead] = []
     for r in rows:
         results.append(

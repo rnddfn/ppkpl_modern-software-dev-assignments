@@ -37,7 +37,13 @@ QUESTION = (
 
 
 # TODO: Fill this in!
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = """You are an expert Python API integrations developer.
+Your task is to write clean, robust Python code based STRICTLY on the provided Context.
+
+CRITICAL INSTRUCTIONS:
+1. Output ONLY a single fenced Python code block (```python ... ```) containing the required function and imports (`import requests`).
+2. Do NOT include any explanations, greetings, or conversational filler before or after the code block.
+3. Adhere to the API documentation (Base URL, endpoints, headers) provided in the context exactly."""
 
 
 # For this simple example
@@ -52,11 +58,13 @@ REQUIRED_SNIPPETS = [
 
 
 def YOUR_CONTEXT_PROVIDER(corpus: List[str]) -> List[str]:
-    """TODO: Select and return the relevant subset of documents from CORPUS for this task.
-
-    For example, return [] to simulate missing context, or [corpus[0]] to include the API docs.
-    """
-    return []
+    """TODO: Select and return the relevant subset of documents from CORPUS for this task."""
+    # Menyaring pesan error bawaan load_corpus_from_files (opsional namun praktik yang baik)
+    # Jika menggunakan Vector DB, logika pencarian similarity search (misal: FAISS/Chroma) diletakkan di sini.
+    valid_docs = [doc for doc in corpus if not doc.startswith("[load_error]") and not doc.startswith("[missing_file]")]
+    
+    # Kembalikan seluruh dokumen valid sebagai konteks
+    return valid_docs
 
 
 def make_user_prompt(question: str, context_docs: List[str]) -> str:
