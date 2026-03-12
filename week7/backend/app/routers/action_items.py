@@ -5,7 +5,7 @@ from sqlalchemy import asc, desc, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import ActionItem
+from ..models import ActionItem, Project
 from ..schemas import ActionItemCreate, ActionItemPatch, ActionItemRead
 
 router = APIRouter(prefix="/action-items", tags=["action_items"])
@@ -39,10 +39,16 @@ def _resolve_sort(sort: str):
     return order_fn(sort_column)
 
 
+def _require_project_exists(db: Session, project_id: int) -> None:
+    if not db.get(Project, project_id):
+        raise HTTPException(status_code=404, detail="Project not found")
+
+
 @router.get("/", response_model=list[ActionItemRead])
 def list_items(
     db: Session = Depends(get_db),
     completed: Optional[bool] = None,
+    project_id: Optional[int] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     sort: str = Query("-created_at"),
@@ -50,6 +56,8 @@ def list_items(
     stmt = select(ActionItem)
     if completed is not None:
         stmt = stmt.where(ActionItem.completed.is_(completed))
+    if project_id is not None:
+        stmt = stmt.where(ActionItem.project_id == project_id)
 
     stmt = stmt.order_by(_resolve_sort(sort))
 
@@ -59,7 +67,14 @@ def list_items(
 
 @router.post("/", response_model=ActionItemRead, status_code=201)
 def create_item(payload: ActionItemCreate, db: Session = Depends(get_db)) -> ActionItemRead:
-    item = ActionItem(description=payload.description, completed=False)
+    if payload.project_id is not None:
+        _require_project_exists(db, payload.project_id)
+
+    item = ActionItem(
+        description=payload.description,
+        completed=False,
+        project_id=payload.project_id,
+    )
     db.add(item)
     db.flush()
     db.refresh(item)
@@ -99,6 +114,10 @@ def patch_item(item_id: int, payload: ActionItemPatch, db: Session = Depends(get
         item.description = payload.description
     if payload.completed is not None:
         item.completed = payload.completed
+    if "project_id" in payload.model_fields_set:
+        if payload.project_id is not None:
+            _require_project_exists(db, payload.project_id)
+        item.project_id = payload.project_id
     db.add(item)
     db.flush()
     db.refresh(item)
